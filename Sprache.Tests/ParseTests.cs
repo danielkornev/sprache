@@ -12,25 +12,25 @@ namespace Sprache.Tests
         [Test]
         public void Parser_OfChar_AcceptsThatChar()
         {
-            AssertParser.SucceedsWithOne(Parse.Char('a'), "a", 'a');
+            AssertParser.SucceedsWithOne(Parse.Char('a').Once(), "a", 'a');
         }
 
         [Test]
         public void Parser_OfChar_AcceptsOnlyOneChar()
         {
-            AssertParser.SucceedsWithOne(Parse.Char('a'), "aaa", 'a');
+            AssertParser.SucceedsWithOne(Parse.Char('a').Once(), "aaa", 'a');
         }
 
         [Test]
         public void Parser_OfChar_DoesNotAcceptNonMatchingChar()
         {
-            AssertParser.FailsAt(Parse.Char('a'), "b", 0);
+            AssertParser.FailsAt(Parse.Char('a').Once(), "b", 0);
         }
 
         [Test]
         public void Parser_OfChar_DoesNotAcceptEmptyInput()
         {
-            AssertParser.Fails(Parse.Char('a'), "");
+            AssertParser.Fails(Parse.Char('a').Once(), "");
         }
 
         [Test]
@@ -66,8 +66,34 @@ namespace Sprache.Tests
         [Test]
         public void ConcatenatingParsers_ConcatenatesResults()
         {
-            var p = Parse.Char('a').Concat(Parse.Char('b'));
+            var p = Parse.Char('a').Once().Then(a =>
+                Parse.Char('b').Once().Select(b => a.Concat(b)));
             AssertParser.SucceedsWithAll(p, "ab"); 
+        }
+
+        [Test]
+        public void ReturningValue_DoesNotAdvanceInput()
+        {
+            var p = Parse.Return(1);
+            AssertParser.SucceedsWith(p, "abc", n => Assert.AreEqual(1, n));
+        }
+
+        [Test]
+        public void ReturningValue_ReturnsValueAsResult()
+        {
+            var p = Parse.Return(1);
+            var r = (Success<int>)p.Parse("abc");
+            Assert.AreEqual(0, r.Remainder.Position);
+        }
+
+        [Test]
+        public void CanSpecifyParsersUsingQueryComprehensions()
+        {
+            var p = from a in Parse.Char('a')
+                    from bs in Parse.Char('b').Repeat()
+                    select new[] { a }.Concat(bs);
+
+            AssertParser.SucceedsWithAll(p, "abbb");
         }
     }
 }
