@@ -45,16 +45,21 @@ namespace Sprache
         public static readonly Parser<IEnumerable<char>> Upper = Char(char.IsUpper, "upper");
         public static readonly Parser<IEnumerable<char>> Numeric = Char(char.IsNumber, "numeric character");
 
-        public static Parser<V> Then<T, U, V>(this Parser<T> first, Parser<U> second, Func<T, U, V> combine)
+        public static Parser<U> Then<T, U>(this Parser<T> first, Func<T, Parser<U>> second)
+        {
+            return i => first(i).IfSuccess(s => second(s.Result)(s.Remainder));
+        }
+
+        public static Parser<V> Combine<T, U, V>(this Parser<T> first, Parser<U> second, Func<T, U, V> combine)
         {
             return i => first(i).IfSuccess(s1 =>
                 second(s1.Remainder).IfSuccess(s2 =>
                     new Success<V>(combine(s1.Result, s2.Result), s2.Remainder)));
         }
 
-        public static Parser<IEnumerable<T>> Then<T>(this Parser<IEnumerable<T>> first, Parser<IEnumerable<T>> second)
+        public static Parser<IEnumerable<T>> Concat<T>(this Parser<IEnumerable<T>> first, Parser<IEnumerable<T>> second)
         {
-            return first.Then(second, (t1, t2) => t1.Concat(t2));
+            return first.Then(t1 => second.Cast(t2 => t1.Concat(t2)));
         }
 
         public static Parser<IEnumerable<T>> Repeat<T>(this Parser<IEnumerable<T>> parser)
@@ -93,17 +98,17 @@ namespace Sprache
 
         public static Parser<IEnumerable<T>> AtLeastOnce<T>(this Parser<IEnumerable<T>> parser)
         {
-            return parser.Then(parser.Repeat());
+            return parser.Concat(parser.Repeat());
         }
 
         public static Parser<U> IgnoreThen<T, U>(this Parser<T> first, Parser<U> second)
         {
-            return first.Then(second, (t, u) => u);
+            return first.Then(ignored => second);
         }
 
         public static Parser<T> ThenIgnore<T, U>(this Parser<T> first, Parser<U> second)
         {
-            return first.Then(second, (t, u) => t);
+            return first.Then(result => second.Cast(ignored => result));
         }
 
         public static Parser<string> Token(this Parser<IEnumerable<char>> parser)
@@ -120,7 +125,12 @@ namespace Sprache
 
         public static Parser<T> Or<T>(this Parser<T> left, Parser<T> right)
         {
-            return i => left(i).IfFailure(f => right(i));
+            return i => left(i).IfFailure(f => f.Input == i ? right(i) : f);
+        }
+
+        public static Parser<T> Try<T>(this Parser<T> parser)
+        {
+            return i => parser(i).IfFailure(f => new Failure<T>(i, f.Message));
         }
 
         public static Parser<IEnumerable<T>> AsItem<T>(this Parser<T> parser)

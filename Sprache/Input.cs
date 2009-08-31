@@ -15,7 +15,7 @@ namespace Sprache
         {
         }
 
-        Input(string source, int position)
+        internal Input(string source, int position)
         {
             _source = source;
             _position = position;
@@ -23,6 +23,9 @@ namespace Sprache
 
         public Input Advance()
         {
+            if (AtEnd)
+                throw new InvalidOperationException("The input is already at the end of the source.");
+
             return new Input(_source, _position + 1);
         }
 
@@ -30,9 +33,22 @@ namespace Sprache
 
         public bool AtEnd { get { return _position == _source.Length; } }
 
+        public int Position { get { return _position; } }
+
         public override string ToString()
         {
             return "Position = " + _position;
+        }
+
+        public override bool Equals(object obj)
+        {
+            var i = obj as Input;
+            return i != null && i._source == _source && i._position == _position;
+        }
+
+        public override int GetHashCode()
+        {
+            return _source.GetHashCode() ^ _position.GetHashCode();
         }
     }
 }
