@@ -51,17 +51,12 @@ namespace Sprache
 
         public static Parser<IEnumerable<T>> Repeat<T>(this Parser<T> parser)
         {
-            return parser.AtLeastOnce().Or(Return(Enumerable.Empty<T>()));
+            return parser.AtLeastOnce().Try().Or(Return(Enumerable.Empty<T>()));
         }
 
         public static Parser<IEnumerable<T>> AtLeastOnce<T>(this Parser<T> parser)
         {
-            return parser.Then(t => parser.Repeat().Select(ts => Cons(t, ts)));
-        }
-
-        static IEnumerable<T> Cons<T>(T t, IEnumerable<T> ts)
-        {
-            return new[] { t }.Concat(ts);
+            return parser.Once().Then(t1 => parser.Repeat().Select(ts => t1.Concat(ts)));
         }
 
         public static Parser<T> End<T>(this Parser<T> parser)
@@ -117,6 +112,11 @@ namespace Sprache
         public static Parser<IEnumerable<T>> Once<T>(this Parser<T> parser)
         {
             return parser.Select(r => (IEnumerable<T>)new[] { r });
+        }
+
+        public static Parser<IEnumerable<T>> Concat<T>(this Parser<IEnumerable<T>> first, Parser<IEnumerable<T>> second)
+        {
+            return first.Then(f => second.Select(s => f.Concat(s)));
         }
 
         public static Parser<T> Return<T>(T value)

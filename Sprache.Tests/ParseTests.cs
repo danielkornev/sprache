@@ -89,11 +89,12 @@ namespace Sprache.Tests
         [Test]
         public void CanSpecifyParsersUsingQueryComprehensions()
         {
-            var p = from a in Parse.Char('a')
+            var p = from a in Parse.Char('a').Once()
                     from bs in Parse.Char('b').Repeat()
-                    select new[] { a }.Concat(bs);
+                    from cs in Parse.Char('c').AtLeastOnce()
+                    select a.Concat(bs).Concat(cs);
 
-            AssertParser.SucceedsWithAll(p, "abbb");
+            AssertParser.SucceedsWithAll(p, "abbbc");
         }
     }
 }

@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sprache", "Sprache\Sprache.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sprache.Tests", "Sprache.Tests\Sprache.Tests.csproj", "{68C733D9-5ACC-4AFA-85E5-FB9146708DCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlExample", "XmlExample\XmlExample.csproj", "{D13B4DBC-CD71-44BD-BEA6-746684857784}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +21,10 @@ Global
 		{68C733D9-5ACC-4AFA-85E5-FB9146708DCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68C733D9-5ACC-4AFA-85E5-FB9146708DCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68C733D9-5ACC-4AFA-85E5-FB9146708DCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D13B4DBC-CD71-44BD-BEA6-746684857784}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D13B4DBC-CD71-44BD-BEA6-746684857784}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D13B4DBC-CD71-44BD-BEA6-746684857784}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D13B4DBC-CD71-44BD-BEA6-746684857784}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
