@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Enforce.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Parse.cs" />
     <Compile Include="ParserOfT.cs" />

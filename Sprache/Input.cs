@@ -17,6 +17,8 @@ namespace Sprache
 
         internal Input(string source, int position)
         {
+            Enforce.ArgumentNotNull(source, "source");
+
             _source = source;
             _position = position;
         }

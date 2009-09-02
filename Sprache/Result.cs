@@ -15,6 +15,8 @@ namespace Sprache
     {
         public static Success<T> Succeed<T>(T result, Input remainder)
         {
+            Enforce.ArgumentNotNull(remainder, "remainder");
+
             return new Success<T>(result, remainder);
         }
     }
@@ -26,6 +28,8 @@ namespace Sprache
 
         public Success(T result, Input remainder)
         {
+            Enforce.ArgumentNotNull(remainder, "remainder");
+
             _result = result;
             _remainder = remainder;
         }
@@ -36,6 +40,7 @@ namespace Sprache
 
         public override Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next)
         {
+            Enforce.ArgumentNotNull(next, "next");
             return next(this);
         }
 
@@ -58,10 +63,14 @@ namespace Sprache
         public Failure(Input input, string message, params object[] formatArgs)
             : this(input, () => string.Format(message, formatArgs))
         {
+            Enforce.ArgumentNotNull(message, "message");
+            Enforce.ArgumentNotNull(formatArgs, "formatArgs");
         }
 
         public Failure(Input input, Func<string> message)
         {
+            Enforce.ArgumentNotNull(input, "input");
+            Enforce.ArgumentNotNull(message, "message");
             _input = input;
             _message = message;
         }
@@ -72,11 +81,13 @@ namespace Sprache
 
         public override Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next)
         {
+            Enforce.ArgumentNotNull(next, "next");
             return new Failure<U>(Input, () => Message);
         }
 
         public override Result<T> IfFailure(Func<Failure<T>, Result<T>> next)
         {
+            Enforce.ArgumentNotNull(next, "next");
             return next(this);
         }
 

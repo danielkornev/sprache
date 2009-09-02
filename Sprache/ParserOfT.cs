@@ -11,6 +11,9 @@ namespace Sprache
     {
         public static Result<T> Parse<T>(this Parser<T> parser, string input)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+            Enforce.ArgumentNotNull(input, "input");
+
             return parser(new Input(input));
         }
     }

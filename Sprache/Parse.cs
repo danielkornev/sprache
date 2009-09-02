@@ -9,6 +9,9 @@ namespace Sprache
     {
         public static Parser<char> Char(Predicate<char> predicate, string description)
         {
+            Enforce.ArgumentNotNull(predicate, "predicate");
+            Enforce.ArgumentNotNull(description, "description");
+
             return i =>
             {
                 if (!i.AtEnd)
@@ -46,21 +49,30 @@ namespace Sprache
 
         public static Parser<U> Then<T, U>(this Parser<T> first, Func<T, Parser<U>> second)
         {
+            Enforce.ArgumentNotNull(first, "first");
+            Enforce.ArgumentNotNull(second, "second");
+
             return i => first(i).IfSuccess(s => second(s.Result)(s.Remainder));
         }
 
         public static Parser<IEnumerable<T>> Repeat<T>(this Parser<T> parser)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+
             return parser.AtLeastOnce().Try().Or(Return(Enumerable.Empty<T>()));
         }
 
         public static Parser<IEnumerable<T>> AtLeastOnce<T>(this Parser<T> parser)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+
             return parser.Once().Then(t1 => parser.Repeat().Select(ts => t1.Concat(ts)));
         }
 
         public static Parser<T> End<T>(this Parser<T> parser)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+
             return i => parser(i).IfSuccess(s =>
                 s.Remainder.AtEnd ?
                     (Result<T>)s :
@@ -69,26 +81,39 @@ namespace Sprache
 
         public static Parser<U> Select<T, U>(this Parser<T> parser, Func<T, U> convert)
         {
-            return i => parser(i).IfSuccess(s => Result.Succeed(convert(s.Result), s.Remainder));
+            Enforce.ArgumentNotNull(parser, "parser");
+            Enforce.ArgumentNotNull(convert, "convert");
+
+            return parser.Then(t => Return(convert(t)));
         }
 
         public static Parser<U> IgnoreThen<T, U>(this Parser<T> first, Parser<U> second)
         {
+            Enforce.ArgumentNotNull(first, "first");
+            Enforce.ArgumentNotNull(second, "second");
+
             return first.Then(ignored => second);
         }
 
         public static Parser<T> ThenIgnore<T, U>(this Parser<T> first, Parser<U> second)
         {
+            Enforce.ArgumentNotNull(first, "first");
+            Enforce.ArgumentNotNull(second, "second");
+
             return first.Then(result => second.Select(ignored => result));
         }
 
         public static Parser<string> Token(this Parser<char> parser)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+
             return parser.Once().Token();
         }
 
         public static Parser<string> Token(this Parser<IEnumerable<char>> parser)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+
             return WhiteSpace.Repeat().IgnoreThen(
                 parser.Select(chrs => new string(chrs.ToArray())).ThenIgnore(
                     WhiteSpace.Repeat()));
@@ -96,26 +121,38 @@ namespace Sprache
 
         public static Parser<T> Ref<T>(Func<Parser<T>> reference)
         {
+            Enforce.ArgumentNotNull(reference, "reference");
+
             return i => reference()(i);
         }
 
-        public static Parser<T> Or<T>(this Parser<T> left, Parser<T> right)
+        public static Parser<T> Or<T>(this Parser<T> first, Parser<T> second)
         {
-            return i => left(i).IfFailure(f => f.Input == i ? right(i) : f);
+            Enforce.ArgumentNotNull(first, "first");
+            Enforce.ArgumentNotNull(second, "second");
+
+            return i => first(i).IfFailure(f => f.Input == i ? second(i) : f);
         }
 
         public static Parser<T> Try<T>(this Parser<T> parser)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+
             return i => parser(i).IfFailure(f => new Failure<T>(i, f.Message));
         }
 
         public static Parser<IEnumerable<T>> Once<T>(this Parser<T> parser)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+
             return parser.Select(r => (IEnumerable<T>)new[] { r });
         }
 
         public static Parser<IEnumerable<T>> Concat<T>(this Parser<IEnumerable<T>> first, Parser<IEnumerable<T>> second)
         {
+            Enforce.ArgumentNotNull(first, "first");
+            Enforce.ArgumentNotNull(second, "second");
+
             return first.Then(f => second.Select(s => f.Concat(s)));
         }
 
@@ -126,6 +163,9 @@ namespace Sprache
 
         public static Parser<T> Where<T>(this Parser<T> parser, Func<T, bool> predicate)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+            Enforce.ArgumentNotNull(predicate, "predicate");
+
             return i => parser(i).IfSuccess(s =>
                 predicate(s.Result) ? (Result<T>)s : new Failure<T>(i, "Unexpected {0}.", s.Result));
         }
@@ -135,6 +175,10 @@ namespace Sprache
             Func<T, Parser<U>> selector,
             Func<T, U, V> projector)
         {
+            Enforce.ArgumentNotNull(parser, "parser");
+            Enforce.ArgumentNotNull(projector, "projector");
+            Enforce.ArgumentNotNull(selector, "selector");
+
             return parser.Then(t => selector(t).Select(u => projector(t, u)));
         }
     }
