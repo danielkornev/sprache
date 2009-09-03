@@ -77,12 +77,12 @@ namespace Sprache
 
         public string Message { get { return _message(); } }
 
-        public Input Input { get { return _input; } }
+        public Input FailedInput { get { return _input; } }
 
         public override Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next)
         {
             Enforce.ArgumentNotNull(next, "next");
-            return new Failure<U>(Input, () => Message);
+            return new Failure<U>(FailedInput, () => Message);
         }
 
         public override Result<T> IfFailure(Func<Failure<T>, Result<T>> next)
@@ -93,7 +93,7 @@ namespace Sprache
 
         public override string ToString()
         {
-            return string.Format("Failed parsing: {0} ({1}).", Message, Input);
+            return string.Format("Failed parsing: {0} ({1}).", Message, FailedInput);
         }
     }
 }

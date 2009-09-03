@@ -96,5 +96,12 @@ namespace Sprache.Tests
 
             AssertParser.SucceedsWithAll(p, "abbbc");
         }
+
+        [Test]
+        public void WhenFirstOptionSucceedsButConsumesNothing_SecondOptionTried()
+        {
+            var p = Parse.Char('a').Repeat().Or(Parse.Char('b').Repeat());
+            AssertParser.SucceedsWithAll(p, "bbb");
+        }
     }
 }

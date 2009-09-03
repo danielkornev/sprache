@@ -131,7 +131,23 @@ namespace Sprache
             Enforce.ArgumentNotNull(first, "first");
             Enforce.ArgumentNotNull(second, "second");
 
-            return i => first(i).IfFailure(f => f.Input == i ? second(i) : f);
+            return i => {
+                var fr = first(i);
+                if (fr is Failure<T>)
+                {
+                    if (((Failure<T>)fr).FailedInput == i)
+                        return second(i);
+                    else
+                        return fr;
+                }
+                else
+                {
+                    if (((Success<T>)fr).Remainder == i)
+                        return second(i).IfFailure(f => fr);
+                    else
+                        return fr;
+                }
+            };
         }
 
         public static Parser<T> Try<T>(this Parser<T> parser)
