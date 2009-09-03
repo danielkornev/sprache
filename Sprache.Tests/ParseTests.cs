@@ -103,5 +103,23 @@ namespace Sprache.Tests
             var p = Parse.Char('a').Many().Or(Parse.Char('b').Many());
             AssertParser.SucceedsWithAll(p, "bbb");
         }
+
+        [Test]
+        public void WhenFirstOptionFailsAndConsumesInput_SecondOptionNotTried()
+        {
+            var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
+            var second = Parse.Char('a').Once();
+            var p = first.Or(second);
+            AssertParser.FailsAt(p, "a", 1);
+        }
+
+        [Test]
+        public void WithTry_WhenFirstOptionFailsAndConsumesInput_SecondOptionTried()
+        {
+            var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
+            var second = Parse.Char('a').Once();
+            var p = first.Try().Or(second);
+            AssertParser.SucceedsWithAll(p, "a");
+        }
     }
 }
