@@ -121,5 +121,12 @@ namespace Sprache.Tests
             var p = first.Try().Or(second);
             AssertParser.SucceedsWithAll(p, "a");
         }
+
+        [Test]
+        public void ParsesString_AsSequenceOfChars()
+        {
+            var p = Parse.String("abc");
+            AssertParser.SucceedsWithAll(p, "abc");
+        }
     }
 }

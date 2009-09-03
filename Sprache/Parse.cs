@@ -47,6 +47,15 @@ namespace Sprache
         public static readonly Parser<char> Upper = Char(char.IsUpper, "upper");
         public static readonly Parser<char> Numeric = Char(char.IsNumber, "numeric character");
 
+        public static Parser<IEnumerable<char>> String(string s)
+        {
+            Enforce.ArgumentNotNull(s, "s");
+            return s
+                .Select(c => Parse.Char(c))
+                .Aggregate(Return(Enumerable.Empty<char>()),
+                    (a, p) => a.Concat(p.Once()));
+        }
+
         public static Parser<U> Then<T, U>(this Parser<T> first, Func<T, Parser<U>> second)
         {
             Enforce.ArgumentNotNull(first, "first");
