@@ -55,7 +55,7 @@ namespace Sprache
             return i => first(i).IfSuccess(s => second(s.Result)(s.Remainder));
         }
 
-        public static Parser<IEnumerable<T>> Repeat<T>(this Parser<T> parser)
+        public static Parser<IEnumerable<T>> Many<T>(this Parser<T> parser)
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
@@ -66,7 +66,7 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return parser.Once().Then(t1 => parser.Repeat().Select(ts => t1.Concat(ts)));
+            return parser.Once().Then(t1 => parser.Many().Select(ts => t1.Concat(ts)));
         }
 
         public static Parser<T> End<T>(this Parser<T> parser)
@@ -114,9 +114,9 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return WhiteSpace.Repeat().IgnoreThen(
+            return WhiteSpace.Many().IgnoreThen(
                 parser.Select(chrs => new string(chrs.ToArray())).ThenIgnore(
-                    WhiteSpace.Repeat()));
+                    WhiteSpace.Many()));
         }
 
         public static Parser<T> Ref<T>(Func<Parser<T>> reference)

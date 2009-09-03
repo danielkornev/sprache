@@ -36,13 +36,13 @@ namespace Sprache.Tests
         [Test]
         public void Parser_OfManyChars_AcceptsEmptyInput()
         {
-            AssertParser.SucceedsWithAll(Parse.Char('a').Repeat(), "");
+            AssertParser.SucceedsWithAll(Parse.Char('a').Many(), "");
         }
 
         [Test]
         public void Parser_OfManyChars_AcceptsManyChars()
         {
-            AssertParser.SucceedsWithAll(Parse.Char('a').Repeat(), "aaa");
+            AssertParser.SucceedsWithAll(Parse.Char('a').Many(), "aaa");
         }
 
         [Test]
@@ -90,7 +90,7 @@ namespace Sprache.Tests
         public void CanSpecifyParsersUsingQueryComprehensions()
         {
             var p = from a in Parse.Char('a').Once()
-                    from bs in Parse.Char('b').Repeat()
+                    from bs in Parse.Char('b').Many()
                     from cs in Parse.Char('c').AtLeastOnce()
                     select a.Concat(bs).Concat(cs);
 
@@ -100,7 +100,7 @@ namespace Sprache.Tests
         [Test]
         public void WhenFirstOptionSucceedsButConsumesNothing_SecondOptionTried()
         {
-            var p = Parse.Char('a').Repeat().Or(Parse.Char('b').Repeat());
+            var p = Parse.Char('a').Many().Or(Parse.Char('b').Many());
             AssertParser.SucceedsWithAll(p, "bbb");
         }
     }

@@ -33,16 +33,16 @@ namespace XmlExample
     {
         static readonly Parser<string> Identifier =
             from first in Parse.Letter.Once()
-            from rest in Parse.LetterOrDigit.Or(Parse.Char('-')).Or(Parse.Char('_')).Repeat()
+            from rest in Parse.LetterOrDigit.Or(Parse.Char('-')).Or(Parse.Char('_')).Many()
             select new string(first.Concat(rest).ToArray());
 
         static Parser<T> Tag<T>(Parser<T> content)
         {
-            return from lead in Parse.WhiteSpace.Repeat()
+            return from lead in Parse.WhiteSpace.Many()
                    from lt in Parse.Char('<')
                    from t in content
                    from gt in Parse.Char('>')
-                   from trail in Parse.WhiteSpace.Repeat()
+                   from trail in Parse.WhiteSpace.Many()
                    select t;
         }
 
@@ -59,12 +59,12 @@ namespace XmlExample
         }
 
         static readonly Parser<Content> Content =
-            from chars in Parse.Char(c => c != '<', "content").Repeat()
+            from chars in Parse.Char(c => c != '<', "content").Many()
             select new Content { Text = new string(chars.ToArray()) };
 
         static readonly Parser<Node> FullNode =
             from tag in BeginTag
-            from nodes in Parse.Ref(() => Item).Repeat()
+            from nodes in Parse.Ref(() => Item).Many()
             from end in EndTag(tag.Name)
             select new Node { Name = tag.Name, Children = nodes };
 
