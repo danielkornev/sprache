@@ -112,20 +112,11 @@ namespace Sprache
             return first.Then(result => second.Select(ignored => result));
         }
 
-        public static Parser<string> Token(this Parser<char> parser)
+        public static Parser<T> Token<T>(this Parser<T> parser)
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return parser.Once().Token();
-        }
-
-        public static Parser<string> Token(this Parser<IEnumerable<char>> parser)
-        {
-            Enforce.ArgumentNotNull(parser, "parser");
-
-            return WhiteSpace.Many().IgnoreThen(
-                parser.Select(chrs => new string(chrs.ToArray())).ThenIgnore(
-                    WhiteSpace.Many()));
+            return WhiteSpace.Many().IgnoreThen(parser.ThenIgnore(WhiteSpace.Many()));
         }
 
         public static Parser<T> Ref<T>(Func<Parser<T>> reference)
