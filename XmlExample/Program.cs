@@ -38,11 +38,9 @@ namespace XmlExample
 
         static Parser<T> Tag<T>(Parser<T> content)
         {
-            return from lead in Parse.WhiteSpace.Many()
-                   from lt in Parse.Char('<')
+            return from lt in Parse.Char('<').Token()
                    from t in content
-                   from gt in Parse.Char('>')
-                   from trail in Parse.WhiteSpace.Many()
+                   from gt in Parse.Char('>').Token()
                    select t;
         }
 
