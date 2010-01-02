@@ -10,6 +10,8 @@ namespace Sprache
         readonly string _source;
         readonly int _position;
 
+        public IDictionary<object, object> Memo = new Dictionary<object, object>();
+
         public Input(string source)
             : this(source, 0)
         {
