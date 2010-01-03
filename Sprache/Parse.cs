@@ -204,7 +204,17 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(reference, "reference");
 
-            return i => reference()(i);
+            return i =>
+                       {
+                           var p = reference();
+                           if (i.Memos.ContainsKey(p))
+                               return (Result<T>) i.Memos[p];
+
+                           i.Memos[p] = new Failure<T>(i, "Infinite left recursion in the grammar.");
+                           var result = p(i);
+                           i.Memos[p] = result;
+                           return result;
+                       };
         }
 
         /// <summary>

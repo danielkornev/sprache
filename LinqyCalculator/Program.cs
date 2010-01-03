@@ -23,6 +23,8 @@ namespace LinqyCalculator
                 {
                     Console.WriteLine("There was a problem with your input: {0}", ex.Message);
                 }
+
+                Console.WriteLine();
             }
         }
 

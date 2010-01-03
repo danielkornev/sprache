@@ -128,5 +128,18 @@ namespace Sprache.Tests
             var p = Parse.String("abc");
             AssertParser.SucceedsWithAll(p, "abc");
         }
+
+        static readonly Parser<IEnumerable<char>> ASeq =
+            (from first in Parse.Ref(() => ASeq)
+             from comma in Parse.Char(',')
+             from rest in Parse.Char('a').Once()
+             select first.Concat(rest))
+            .Or(Parse.Char('a').Once());
+
+        [Test]
+        public void CanParseLeftRecursiveGrammar()
+        {
+            AssertParser.SucceedsWith(ASeq, "a,a,a", r => new string(r.ToArray()).Equals("aaa"));
+        }
     }
 }
