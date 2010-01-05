@@ -420,5 +420,13 @@ namespace Sprache
                             Return(apply(opvalue, lastOperand, r))))
                 .Or(Return(lastOperand));
         }
+
+        public static readonly Parser<string> Number = Numeric.AtLeastOnce().Text();
+
+        public static readonly Parser<string> Decimal =
+            from integral in Parse.Number
+            from fraction in Parse.Char('.').IgnoreThen(Number.Select(n => "." + n)).Or(Return(""))
+            select integral + fraction;
+
     }
 }

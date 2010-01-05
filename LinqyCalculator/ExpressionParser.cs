@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using Sprache;
 
 namespace LinqyCalculator
@@ -28,18 +25,16 @@ namespace LinqyCalculator
         static readonly Parser<ExpressionType> Multiply = Operator("*", ExpressionType.MultiplyChecked);
         static readonly Parser<ExpressionType> Divide = Operator("/", ExpressionType.Divide);
 
-        static readonly Parser<Expression> Number =
-            (from integral in Parse.Numeric.AtLeastOnce().Text()
-             from fraction in Parse.String(".").Concat(Parse.Numeric.AtLeastOnce()).Text()
-                                .Or(Parse.Return(""))
-             select (Expression)Expression.Constant(decimal.Parse(integral + fraction))).Token();
+        static readonly Parser<Expression> Decimal =
+            from d in Parse.Decimal.Token()
+            select (Expression)Expression.Constant(decimal.Parse(d));
 
         static readonly Parser<Expression> Factor =
             ((from lparen in Parse.Char('(')
               from expr in Parse.Ref(() => Expr)
               from rparen in Parse.Char(')')
               select expr)
-             .Or(Number)).Token();
+             .Or(Decimal)).Token();
 
         static readonly Parser<Expression> Term = Parse.ChainOperator(Multiply.Or(Divide), Factor, Expression.MakeBinary);
 
