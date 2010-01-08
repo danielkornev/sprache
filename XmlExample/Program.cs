@@ -33,7 +33,7 @@ namespace XmlExample
     {
         static readonly Parser<string> Identifier =
             from first in Parse.Letter.Once()
-            from rest in Parse.LetterOrDigit.Or(Parse.Char('-')).Or(Parse.Char('_')).Many()
+            from rest in Parse.LetterOrDigit.XOr(Parse.Char('-')).XOr(Parse.Char('_')).Many()
             select new string(first.Concat(rest).ToArray());
 
         static Parser<T> Tag<T>(Parser<T> content)
@@ -70,12 +70,12 @@ namespace XmlExample
                                                      from slash in Parse.Char('/')
                                                      select new Node { Name = id });
         
-        static readonly Parser<Node> Node = ShortNode.Try().Or(FullNode);
+        static readonly Parser<Node> Node = ShortNode.Or(FullNode);
 
-        static readonly Parser<Item> Item = Node.Select(n => (Item)n).Or(Content.Select(c => (Item)c));
+        static readonly Parser<Item> Item = Node.Select(n => (Item)n).XOr(Content.Select(c => (Item)c));
 
         public static readonly Parser<Document> Document =
-            Node.Select(n => new Document { Root = n });
+            Node.Select(n => new Document { Root = n }).End();
     }
 
     class Program
@@ -83,8 +83,9 @@ namespace XmlExample
         static void Main(string[] args)
         {
             var doc = "<body><p>hello,<br/> <i>world!</i></p></body>";
-            var parsed = XmlParser.Document.Parse(doc);
+            var parsed = XmlParser.Document.TryParse(doc);
             Console.WriteLine(parsed);
+            Console.ReadKey(true);
         }
     }
 }

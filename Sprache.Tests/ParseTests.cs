@@ -82,7 +82,7 @@ namespace Sprache.Tests
         public void ReturningValue_ReturnsValueAsResult()
         {
             var p = Parse.Return(1);
-            var r = (Success<int>)p.Parse("abc");
+            var r = (Success<int>)p.TryParse("abc");
             Assert.AreEqual(0, r.Remainder.Position);
         }
 
@@ -100,7 +100,7 @@ namespace Sprache.Tests
         [Test]
         public void WhenFirstOptionSucceedsButConsumesNothing_SecondOptionTried()
         {
-            var p = Parse.Char('a').Many().Or(Parse.Char('b').Many());
+            var p = Parse.Char('a').Many().XOr(Parse.Char('b').Many());
             AssertParser.SucceedsWithAll(p, "bbb");
         }
 
@@ -109,8 +109,17 @@ namespace Sprache.Tests
         {
             var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
             var second = Parse.Char('a').Once();
-            var p = first.Or(second);
+            var p = first.XOr(second);
             AssertParser.FailsAt(p, "a", 1);
+        }
+
+        [Test]
+        public void WhenFirstOptionFailsAndConsumesInput_OrSecondOptionTried()
+        {
+            var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
+            var second = Parse.Char('a').Once();
+            var p = first.Or(second);
+            AssertParser.SucceedsWithAll(p, "a");
         }
 
         [Test]
@@ -118,7 +127,7 @@ namespace Sprache.Tests
         {
             var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
             var second = Parse.Char('a').Once();
-            var p = first.Try().Or(second);
+            var p = first.Try().XOr(second);
             AssertParser.SucceedsWithAll(p, "a");
         }
 
@@ -136,10 +145,40 @@ namespace Sprache.Tests
              select first.Concat(rest))
             .Or(Parse.Char('a').Once());
 
-        [Test]
+        [Test, Ignore("Not Implemented")]
         public void CanParseLeftRecursiveGrammar()
         {
-            AssertParser.SucceedsWith(ASeq, "a,a,a", r => new string(r.ToArray()).Equals("aaa"));
+            AssertParser.SucceedsWith(ASeq.End(), "a,a,a", r => new string(r.ToArray()).Equals("aaa"));
+        }
+
+        [Test]
+        public void DetectsLeftRecursion()
+        {
+            Assert.Throws<ParseException>(() => ASeq.TryParse("a,a,a"));
+        }
+
+        static readonly Parser<IEnumerable<char>> ABSeq =
+            (from first in Parse.Ref(() => BASeq)
+             from rest in Parse.Char('a').Once()
+             select first.Concat(rest))
+            .Or(Parse.Char('a').Once());
+
+        static readonly Parser<IEnumerable<char>> BASeq =
+            (from first in Parse.Ref(() => ABSeq)
+             from rest in Parse.Char('b').Once()
+             select first.Concat(rest))
+            .Or(Parse.Char('b').Once());
+
+        [Test, Ignore("Not Implemented")]
+        public void CanParseMutuallyLeftRecursiveGrammar()
+        {
+            AssertParser.SucceedsWithAll(ABSeq.End(), "baba");
+        }
+
+        [Test]
+        public void DetectsMutualLeftRecursion()
+        {
+            Assert.Throws<ParseException>(() => ABSeq.End().TryParse("baba"));
         }
     }
 }

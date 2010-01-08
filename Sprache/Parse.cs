@@ -11,7 +11,7 @@ namespace Sprache
     public static class Parse
     {
         /// <summary>
-        /// Parse a single character matching 'predicate'
+        /// TryParse a single character matching 'predicate'
         /// </summary>
         /// <param name="predicate"></param>
         /// <param name="description"></param>
@@ -44,7 +44,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse a single character c.
+        /// TryParse a single character c.
         /// </summary>
         /// <param name="c"></param>
         /// <returns></returns>
@@ -62,7 +62,7 @@ namespace Sprache
         public static readonly Parser<char> Numeric = Char(char.IsNumber, "numeric character");
 
         /// <summary>
-        /// Parse a string of characters.
+        /// TryParse a string of characters.
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
@@ -76,7 +76,7 @@ namespace Sprache
         }
         
         /// <summary>
-        /// Parse first, and if successful, then parse second.
+        /// TryParse first, and if successful, then parse second.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="U"></typeparam>
@@ -92,7 +92,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse a stream of elements.
+        /// TryParse a stream of elements.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -101,11 +101,11 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return parser.AtLeastOnce().Try().Or(Return(Enumerable.Empty<T>()));
+            return parser.AtLeastOnce().Try().XOr(Return(Enumerable.Empty<T>()));
         }
 
         /// <summary>
-        /// Parse a stream of elements with at least one item.
+        /// TryParse a stream of elements with at least one item.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -118,7 +118,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse end-of-input.
+        /// TryParse end-of-input.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -150,7 +150,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse first, then second, returning only the result of second.
+        /// TryParse first, then second, returning only the result of second.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="U"></typeparam>
@@ -166,7 +166,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse first, then second, returning only the result of first.
+        /// TryParse first, then second, returning only the result of first.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="U"></typeparam>
@@ -182,7 +182,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse the token, embedded in any amount of whitespace characters.
+        /// TryParse the token, embedded in any amount of whitespace characters.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -204,13 +204,20 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(reference, "reference");
 
+            Parser<T> p = null;
+
             return i =>
                        {
-                           var p = reference();
-                           if (i.Memos.ContainsKey(p))
-                               return (Result<T>) i.Memos[p];
+                           if (p == null)
+                               p = reference();
 
-                           i.Memos[p] = new Failure<T>(i, "Infinite left recursion in the grammar.");
+                           if (i.Memos.ContainsKey(p))
+                           {
+                               var failure = (Failure<T>)i.Memos[p];
+                               throw new ParseException(failure.Message);
+                           }
+
+                           i.Memos[p] = new Failure<T>(i, "Left recursion in the grammar.");
                            var result = p(i);
                            i.Memos[p] = result;
                            return result;
@@ -228,14 +235,26 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse first, if it succeeds, return first, otherwise try second.
-        /// Assumes that the first parsed character will determine the parser chosen (see Try).
+        /// TryParse first, if it succeeds, return first, otherwise try second.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="first"></param>
         /// <param name="second"></param>
         /// <returns></returns>
         public static Parser<T> Or<T>(this Parser<T> first, Parser<T> second)
+        {
+            return first.Try().XOr(second);
+        }
+
+        /// <summary>
+        /// TryParse first, if it succeeds, return first, otherwise try second.
+        /// Assumes that the first parsed character will determine the parser chosen (see Try).
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="first"></param>
+        /// <param name="second"></param>
+        /// <returns></returns>
+        public static Parser<T> XOr<T>(this Parser<T> first, Parser<T> second)
         {
             Enforce.ArgumentNotNull(first, "first");
             Enforce.ArgumentNotNull(second, "second");
@@ -273,7 +292,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// Parse a stream of elements containing only one item.
+        /// TryParse a stream of elements containing only one item.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -388,7 +407,7 @@ namespace Sprache
             return op.Then(opvalue =>
                     operand.Then(operandValue =>
                         ChainOperatorRest(apply(opvalue, firstOperand, operandValue), op, operand, apply)))
-                .Or(Return(firstOperand));
+                .XOr(Return(firstOperand));
         }
 
         /// <summary>
@@ -418,14 +437,14 @@ namespace Sprache
                     operand.Then(operandValue =>
                         ChainRightOperatorRest(operandValue, op, operand, apply)).Then(r =>
                             Return(apply(opvalue, lastOperand, r))))
-                .Or(Return(lastOperand));
+                .XOr(Return(lastOperand));
         }
 
         public static readonly Parser<string> Number = Numeric.AtLeastOnce().Text();
 
         public static readonly Parser<string> Decimal =
             from integral in Parse.Number
-            from fraction in Parse.Char('.').IgnoreThen(Number.Select(n => "." + n)).Or(Return(""))
+            from fraction in Parse.Char('.').IgnoreThen(Number.Select(n => "." + n)).XOr(Return(""))
             select integral + fraction;
 
     }

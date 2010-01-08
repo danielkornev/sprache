@@ -19,10 +19,7 @@ namespace Sprache.Tests
 
         public static void SucceedsWithMany<T>(Parser<IEnumerable<T>> parser, string input, IEnumerable<T> expectedResult)
         {
-            SucceedsWith(parser, input, t =>
-            {
-                Assert.IsTrue(t.SequenceEqual(expectedResult));
-            });
+            SucceedsWith(parser, input, t => Assert.IsTrue(t.SequenceEqual(expectedResult)));
         }
 
         public static void SucceedsWithAll(Parser<IEnumerable<char>> parser, string input)
@@ -32,10 +29,10 @@ namespace Sprache.Tests
 
         public static void SucceedsWith<T>(Parser<T> parser, string input, Action<T> resultAssertion)
         {
-            parser.Parse(input)
+            parser.TryParse(input)
                 .IfFailure(f =>
                 {
-                    Assert.Fail("Parsing of \"{0}\" failed unexpectedly: {1}", input, f.Message);
+                    Assert.Fail("Parsing of \"{0}\" failed unexpectedly at position {1}: {2}", input, f.FailedInput.Position, f.Message);
                     return f;
                 })
                 .IfSuccess(s =>
@@ -57,7 +54,7 @@ namespace Sprache.Tests
 
         public static void FailsWith<T>(Parser<T> parser, string input, Action<Failure<T>> resultAssertion)
         {
-            parser.Parse(input)
+            parser.TryParse(input)
                 .IfSuccess(s =>
                 {
                     Assert.Fail("Expected failure but succeeded with {0}.", s.Result);

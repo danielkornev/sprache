@@ -64,9 +64,10 @@
     <Compile Include="Enforce.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Parse.cs" />
+    <Compile Include="ParseException.cs" />
     <Compile Include="ParserOfT.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Result.cs" />
+    <Compile Include="ResultOfT.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
