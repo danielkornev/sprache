@@ -7,10 +7,12 @@ namespace Sprache
 {
     public class ParseException : Exception
     {
-        public ParseException(string message)
+        public ParseException(Input failedInput, string message)
             : base(message)
         {
+            FailedInput = failedInput;
         }
 
+        public Input FailedInput { get; private set; }
     }
 }

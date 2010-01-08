@@ -21,7 +21,7 @@ namespace LinqyCalculator
         static readonly Parser<ExpressionType> Multiply = Operator("*", ExpressionType.MultiplyChecked);
         static readonly Parser<ExpressionType> Divide = Operator("/", ExpressionType.Divide);
 
-        static readonly Parser<Expression> Decimal =
+        static readonly Parser<Expression> Constant =
             from d in Parse.Decimal.Token()
             select (Expression)Expression.Constant(decimal.Parse(d));
 
@@ -30,7 +30,7 @@ namespace LinqyCalculator
               from expr in Parse.Ref(() => Expr)
               from rparen in Parse.Char(')')
               select expr)
-             .Or(Decimal)).Token();
+             .Or(Constant)).Token();
 
         static readonly Parser<Expression> Term = Parse.ChainOperator(Multiply.Or(Divide), Factor, Expression.MakeBinary);
 

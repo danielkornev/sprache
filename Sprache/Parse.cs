@@ -214,7 +214,7 @@ namespace Sprache
                            if (i.Memos.ContainsKey(p))
                            {
                                var failure = (Failure<T>)i.Memos[p];
-                               throw new ParseException(failure.Message);
+                               throw new ParseException(failure.FailedInput, failure.Message);
                            }
 
                            i.Memos[p] = new Failure<T>(i, "Left recursion in the grammar.");

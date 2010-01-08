@@ -29,7 +29,7 @@ namespace Sprache
                 return success.Result;
 
             var failure = (Failure<T>) result;
-            throw new ParseException(failure.Message);
+            throw new ParseException(failure.FailedInput, failure.Message);
         }
     }
 }

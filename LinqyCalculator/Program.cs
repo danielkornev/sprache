@@ -19,9 +19,9 @@ namespace LinqyCalculator
                     Console.WriteLine("Parsed as {0}", parsed);
                     Console.WriteLine("Value is {0}", parsed.Compile()());
                 }
-                catch (Exception ex)
+                catch (ParseException ex)
                 {
-                    Console.WriteLine("There was a problem with your input: {0}", ex.Message);
+                    Console.WriteLine("There was a problem with your input at position {0}: {1}", ex.FailedInput.Position, ex.Message);
                 }
 
                 Console.WriteLine();
