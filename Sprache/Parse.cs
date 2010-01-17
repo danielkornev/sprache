@@ -26,31 +26,44 @@ namespace Sprache
                 if (!i.AtEnd)
                 {
                     if (predicate(i.Current))
-                    {
                         return Result.Succeed(i.Current, i.Advance());
-                    }
-                    else
-                    {
-                        return new Failure<char>(i,
-                            "Expected '{0}' but found '{1}'.", description, i.Current);
-                    }
+
+                    return new Failure<char>(i, "Expected '{0}' but found '{1}'.", description, i.Current);
                 }
-                else
-                {
-                    return new Failure<char>(i,
-                        "Unexpected end-of-input reached while looking for '{0}'.", description);
-                }
+
+                return new Failure<char>(i, "Unexpected end-of-input reached while looking for '{0}'.", description);
             };
         }
 
         /// <summary>
-        /// TryParse a single character c.
+        /// Parse a single character except those matching <paramref name="predicate"/>.
+        /// </summary>
+        /// <param name="predicate">Characters not to match.</param>
+        /// <param name="description">Description of characters that don't match.</param>
+        /// <returns>A parser for characters except those matching <paramref name="predicate"/>.</returns>
+        public static Parser<char> CharExcept(Predicate<char> predicate, string description)
+        {
+            return Char(c => !predicate(c), "any character except " + description);
+        }
+
+        /// <summary>
+        /// Parse a single character c.
         /// </summary>
         /// <param name="c"></param>
         /// <returns></returns>
         public static Parser<char> Char(char c)
         {
             return Char(ch => c == ch, c.ToString());
+        }
+
+        /// <summary>
+        /// Parse a single character except c.
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        public static Parser<char> CharExcept(char c)
+        {
+            return CharExcept(ch => c == ch, c.ToString());
         }
 
         public static readonly Parser<char> WhiteSpace = Char(char.IsWhiteSpace, "whitespace");
@@ -97,11 +110,25 @@ namespace Sprache
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
         /// <returns></returns>
+        /// <remarks>Implemented imperatively to decrease stack usage.</remarks>
         public static Parser<IEnumerable<T>> Many<T>(this Parser<T> parser)
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return parser.AtLeastOnce().Try().XOr(Return(Enumerable.Empty<T>()));
+            return i =>
+            {
+                var remainder = i;
+                var result = new List<T>();
+                var r = parser(i) as Success<T>;
+                while (r != null)
+                {
+                    result.Add(r.Result);
+                    remainder = r.Remainder;
+                    r = parser(remainder) as Success<T>;
+                }
+
+                return new Success<IEnumerable<T>>(result, remainder);
+            };
         }
 
         /// <summary>
