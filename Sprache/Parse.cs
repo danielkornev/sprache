@@ -119,13 +119,18 @@ namespace Sprache
             {
                 var remainder = i;
                 var result = new List<T>();
-                var r = parser(i) as Success<T>;
-                while (r != null)
+                var r = parser(i);
+                while (r is Success<T>)
                 {
-                    result.Add(r.Result);
-                    remainder = r.Remainder;
-                    r = parser(remainder) as Success<T>;
+                    var s = r as Success<T>;
+                    result.Add(s.Result);
+                    remainder = s.Remainder;
+                    r = parser(remainder);
                 }
+
+                var f = (Failure<T>)r;
+                if (f.FailedInput != remainder)
+                    return new Failure<IEnumerable<T>>(f.FailedInput, () => f.Message);
 
                 return new Success<IEnumerable<T>>(result, remainder);
             };

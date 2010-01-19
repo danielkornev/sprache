@@ -5,6 +5,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Sprache Tiny C# Parser Combinators")]
 [assembly: AssemblyProduct("Sprache")]
 [assembly: AssemblyCopyright("Copyright © Nicholas Blumhardt 2009")]
-[assembly: AssemblyVersion("0.1.4.1")]
-[assembly: AssemblyFileVersion("0.1.4.1")]
+[assembly: AssemblyVersion("0.1.5.1")]
+[assembly: AssemblyFileVersion("0.1.5.1")]
 [assembly: InternalsVisibleTo("Sprache.Tests")]

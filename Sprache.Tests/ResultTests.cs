@@ -2,10 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using NUnit.Framework;
 
 namespace Sprache.Tests
 {
-    class ResultTests
+    [TestFixture]
+    public class ResultTests
     {
+        [Test]
+        public void FailureContainingBracketFormattedSuccessfully()
+        {
+            var p = Parse.String("xy").Text().Many();
+            var r = (Failure<IEnumerable<string>>)p.TryParse("x{");
+            Assert.That(r.Message.Contains("found '{'"));
+        }
     }
 }
