@@ -14,7 +14,7 @@ namespace Sprache.Tests
         {
             var p = Parse.String("xy").Text().Many();
             var r = (Failure<IEnumerable<string>>)p.TryParse("x{");
-            Assert.That(r.Message.Contains("found '{'"));
+            Assert.That(r.Message.Contains("unexpected '{'"));
         }
     }
 }

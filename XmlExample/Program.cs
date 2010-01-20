@@ -53,11 +53,11 @@ namespace XmlExample
             return Tag(from slash in Parse.Char('/')
                        from id in Identifier
                        where id == name
-                       select id);
+                       select id).Named("closing tag for " + name);
         }
 
         static readonly Parser<Content> Content =
-            from chars in Parse.Char(c => c != '<', "content").Many()
+            from chars in Parse.CharExcept('<').Many()
             select new Content { Text = new string(chars.ToArray()) };
 
         static readonly Parser<Node> FullNode =
@@ -72,7 +72,7 @@ namespace XmlExample
         
         static readonly Parser<Node> Node = ShortNode.Or(FullNode);
 
-        static readonly Parser<Item> Item = Node.Select(n => (Item)n).XOr(Content.Select(c => (Item)c));
+        static readonly Parser<Item> Item = Node.Select(n => (Item)n).Or(Content.Select(c => (Item)c));
 
         public static readonly Parser<Document> Document =
             Node.Select(n => new Document { Root = n }).End();

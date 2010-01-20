@@ -127,13 +127,16 @@ namespace Sprache
                 while (r is Success<T>)
                 {
                     var s = r as Success<T>;
+                    if (remainder == s.Remainder)
+                        break;
+
                     result.Add(s.Result);
                     remainder = s.Remainder;
                     r = parser(remainder);
                 }
 
-                var f = (Failure<T>)r;
-                if (f.FailedInput != remainder)
+                var f = r as Failure<T>;
+                if (f != null && f.FailedInput != remainder)
                     return f.ChangeType<IEnumerable<T>>();
 
                 return new Success<IEnumerable<T>>(result, remainder);
@@ -251,10 +254,7 @@ namespace Sprache
                                p = reference();
 
                            if (i.Memos.ContainsKey(p))
-                           {
-                               var failure = (Failure<T>)i.Memos[p];
-                               throw new ParseException(failure.ToString());
-                           }
+                               throw new ParseException(i.Memos[p].ToString());
 
                            i.Memos[p] = new Failure<T>(i,
                                () => "Left recursion in the grammar.",
