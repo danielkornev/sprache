@@ -22,15 +22,15 @@ namespace LinqyCalculator
         static readonly Parser<ExpressionType> Divide = Operator("/", ExpressionType.Divide);
 
         static readonly Parser<Expression> Constant =
-            from d in Parse.Decimal.Token()
-            select (Expression)Expression.Constant(decimal.Parse(d));
+            (from d in Parse.Decimal.Token()
+             select (Expression)Expression.Constant(decimal.Parse(d))).Named("number");
 
         static readonly Parser<Expression> Factor =
             ((from lparen in Parse.Char('(')
               from expr in Parse.Ref(() => Expr)
               from rparen in Parse.Char(')')
-              select expr)
-             .Or(Constant)).Token();
+              select expr).Named("expression")
+             .XOr(Constant)).Token();
 
         static readonly Parser<Expression> Term = Parse.ChainOperator(Multiply.Or(Divide), Factor, Expression.MakeBinary);
 

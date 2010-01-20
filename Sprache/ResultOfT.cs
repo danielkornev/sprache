@@ -15,8 +15,6 @@ namespace Sprache
     {
         public static Success<T> Succeed<T>(T result, Input remainder)
         {
-            Enforce.ArgumentNotNull(remainder, "remainder");
-
             return new Success<T>(result, remainder);
         }
     }
@@ -28,8 +26,6 @@ namespace Sprache
 
         public Success(T result, Input remainder)
         {
-            Enforce.ArgumentNotNull(remainder, "remainder");
-
             _result = result;
             _remainder = remainder;
         }
@@ -40,7 +36,6 @@ namespace Sprache
 
         public override Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next)
         {
-            Enforce.ArgumentNotNull(next, "next");
             return next(this);
         }
 
@@ -58,42 +53,45 @@ namespace Sprache
     public sealed class Failure<T> : Result<T>
     {
         readonly Func<string> _message;
+        readonly Func<IEnumerable<string>> _expectations;
         readonly Input _input;
 
-        public Failure(Input input, string message, params object[] formatArgs)
-            : this(input, () => string.Format(message, formatArgs))
+        public Failure(Input input, Func<string> message, Func<IEnumerable<string>> expectations)
         {
-            Enforce.ArgumentNotNull(message, "message");
-            Enforce.ArgumentNotNull(formatArgs, "formatArgs");
-        }
-
-        public Failure(Input input, Func<string> message)
-        {
-            Enforce.ArgumentNotNull(input, "input");
-            Enforce.ArgumentNotNull(message, "message");
             _input = input;
             _message = message;
+            _expectations = expectations;
         }
 
         public string Message { get { return _message(); } }
+
+        public IEnumerable<string> Expectations { get { return _expectations(); } }
 
         public Input FailedInput { get { return _input; } }
 
         public override Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next)
         {
-            Enforce.ArgumentNotNull(next, "next");
-            return new Failure<U>(FailedInput, () => Message);
+            return new Failure<U>(FailedInput, _message, _expectations);
         }
 
         public override Result<T> IfFailure(Func<Failure<T>, Result<T>> next)
         {
-            Enforce.ArgumentNotNull(next, "next");
             return next(this);
+        }
+
+        public Result<U> ChangeType<U>()
+        {
+            return new Failure<U>(_input, _message, _expectations);
         }
 
         public override string ToString()
         {
-            return string.Format("Failed parsing: {0} ({1}).", Message, FailedInput);
+            string expMsg = "";
+            
+            if (Expectations.Any())
+                expMsg = " expected " + Expectations.Aggregate((e1, e2) => e1 + " or " + e2);
+            
+            return string.Format("Parsing failure: {0};{1} ({2}).", Message, expMsg, FailedInput);
         }
     }
 }

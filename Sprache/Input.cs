@@ -41,7 +41,7 @@ namespace Sprache
 
         public override string ToString()
         {
-            return "Position = " + _position;
+            return "Position " + _position;
         }
 
         public override bool Equals(object obj)

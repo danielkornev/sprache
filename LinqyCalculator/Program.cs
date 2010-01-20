@@ -21,7 +21,7 @@ namespace LinqyCalculator
                 }
                 catch (ParseException ex)
                 {
-                    Console.WriteLine("There was a problem with your input at position {0}: {1}", ex.FailedInput.Position, ex.Message);
+                    Console.WriteLine("There was a problem with your input: {0}", ex.Message);
                 }
 
                 Console.WriteLine();

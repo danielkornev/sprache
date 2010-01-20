@@ -28,10 +28,14 @@ namespace Sprache
                     if (predicate(i.Current))
                         return Result.Succeed(i.Current, i.Advance());
 
-                    return new Failure<char>(i, "Expected '{0}' but found '{1}'.", description, i.Current);
+                    return new Failure<char>(i,
+                        () => string.Format("unexpected '{0}'", i.Current),
+                        () => new[] { description });
                 }
 
-                return new Failure<char>(i, "Unexpected end-of-input reached while looking for '{0}'.", description);
+                return new Failure<char>(i,
+                    () => "Unexpected end of input reached",
+                    () => new[] { description });
             };
         }
 
@@ -130,7 +134,7 @@ namespace Sprache
 
                 var f = (Failure<T>)r;
                 if (f.FailedInput != remainder)
-                    return new Failure<IEnumerable<T>>(f.FailedInput, () => f.Message);
+                    return f.ChangeType<IEnumerable<T>>();
 
                 return new Success<IEnumerable<T>>(result, remainder);
             };
@@ -162,7 +166,10 @@ namespace Sprache
             return i => parser(i).IfSuccess(s =>
                 s.Remainder.AtEnd ?
                     (Result<T>)s :
-                    new Failure<T>(s.Remainder, "Expected end of input but got '{0}'", s.Remainder.Current));
+                    new Failure<T>(
+                        s.Remainder,
+                        () => string.Format("unexpected '{0}'", s.Remainder.Current),
+                        () => new[] { "end of input" }));
         }
 
         /// <summary>
@@ -246,10 +253,12 @@ namespace Sprache
                            if (i.Memos.ContainsKey(p))
                            {
                                var failure = (Failure<T>)i.Memos[p];
-                               throw new ParseException(failure.FailedInput, failure.Message);
+                               throw new ParseException(failure.ToString());
                            }
 
-                           i.Memos[p] = new Failure<T>(i, "Left recursion in the grammar.");
+                           i.Memos[p] = new Failure<T>(i,
+                               () => "Left recursion in the grammar.",
+                               () => new string[0]);
                            var result = p(i);
                            i.Memos[p] = result;
                            return result;
@@ -275,7 +284,39 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Or<T>(this Parser<T> first, Parser<T> second)
         {
-            return first.Try().XOr(second);
+            Enforce.ArgumentNotNull(first, "first");
+            Enforce.ArgumentNotNull(second, "second");
+
+            return i =>
+            {
+                var fr = first(i);
+                var ff = fr as Failure<T>;
+                if (ff != null)
+                    return second(i).IfFailure(sf => new Failure<T>(
+                        ff.FailedInput,
+                        () => ff.Message,
+                        () => ff.Expectations.Union(sf.Expectations)));
+
+                var fs = (Success<T>)fr;
+                if (fs.Remainder == i)
+                    return second(i).IfFailure(sf => fs);
+
+                return fs;
+            };
+        }
+
+        /// <summary>
+        /// Names part of the grammar for help with error messages.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parser"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static Parser<T> Named<T>(this Parser<T> parser, string name)
+        {
+            return i => parser(i).IfFailure(f => f.FailedInput == i ?
+                new Failure<T>(f.FailedInput, () => f.Message, () => new[] { name }) :
+                f);
         }
 
         /// <summary>
@@ -293,20 +334,23 @@ namespace Sprache
 
             return i => {
                 var fr = first(i);
-                if (fr is Failure<T>)
+                var ff = fr as Failure<T>;
+                if (ff != null)
                 {
-                    if (((Failure<T>)fr).FailedInput == i)
-                        return second(i);
-                    else
-                        return fr;
+                    if (ff.FailedInput != i)
+                        return ff;
+
+                    return second(i).IfFailure(sf => new Failure<T>(
+                        ff.FailedInput,
+                        () => ff.Message,
+                        () => ff.Expectations.Union(sf.Expectations)));
                 }
-                else
-                {
-                    if (((Success<T>)fr).Remainder == i)
-                        return second(i).IfFailure(f => fr);
-                    else
-                        return fr;
-                }
+
+                var fs = (Success<T>)fr;
+                if (fs.Remainder == i)
+                    return second(i).IfFailure(sf => fs);
+
+                return fs;
             };
         }
 
@@ -320,7 +364,7 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return i => parser(i).IfFailure(f => new Failure<T>(i, f.Message));
+            return i => parser(i).IfFailure(f => new Failure<T>(i, () => f.Message, () => f.Expectations));
         }
 
         /// <summary>
@@ -388,7 +432,9 @@ namespace Sprache
             Enforce.ArgumentNotNull(predicate, "predicate");
 
             return i => parser(i).IfSuccess(s =>
-                predicate(s.Result) ? (Result<T>)s : new Failure<T>(i, "Unexpected {0}.", s.Result));
+                predicate(s.Result) ? (Result<T>)s : new Failure<T>(i,
+                    () => string.Format("Unexpected {0}.", s.Result),
+                    () => new string[0]));
         }
 
         /// <summary>

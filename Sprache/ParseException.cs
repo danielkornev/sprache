@@ -7,12 +7,9 @@ namespace Sprache
 {
     public class ParseException : Exception
     {
-        public ParseException(Input failedInput, string message)
-            : base("Position " + failedInput.Position + ": " + message)
+        public ParseException(string message)
+            : base(message)
         {
-            FailedInput = failedInput;
         }
-
-        public Input FailedInput { get; private set; }
     }
 }
