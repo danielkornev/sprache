@@ -168,7 +168,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// TryParse end-of-input.
+        /// Parse end-of-input.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -203,7 +203,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// TryParse the token, embedded in any amount of whitespace characters.
+        /// Parse the token, embedded in any amount of whitespace characters.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -212,8 +212,9 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return from item in parser
-                   from ws in WhiteSpace.Many()
+            return from leading in WhiteSpace.Many()
+                   from item in parser
+                   from trailing in WhiteSpace.Many()
                    select item;
         }
 
@@ -257,7 +258,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// TryParse first, if it succeeds, return first, otherwise try second.
+        /// Parse first, if it succeeds, return first, otherwise try second.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="first"></param>
@@ -301,7 +302,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// TryParse first, if it succeeds, return first, otherwise try second.
+        /// Parse first, if it succeeds, return first, otherwise try second.
         /// Assumes that the first parsed character will determine the parser chosen (see Try).
         /// </summary>
         /// <typeparam name="T"></typeparam>
