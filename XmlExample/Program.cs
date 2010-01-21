@@ -9,6 +9,11 @@ namespace XmlExample
     public class Document
     {
         public Node Root;
+
+        public override string ToString()
+        {
+            return Root.ToString();
+        }
     }
 
     public class Item { }
@@ -16,17 +21,27 @@ namespace XmlExample
     public class Content : Item
     {
         public string Text;
+
+        public override string ToString()
+        {
+            return Text;
+        }
     }
 
     public class Node : Item
     {
         public string Name;
         public IEnumerable<Item> Children;
-    }
 
-    public class BeginTag
-    {
-        public string Name;
+        public override string ToString()
+        {
+            if (Children != null)
+                return string.Format("<{0}>", Name) +
+                    Children.Aggregate("", (s, c) => s + c) +
+                    string.Format("</{0}>", Name);
+            else
+                return string.Format("<{0}/>", Name);
+        }
     }
 
     public static class XmlParser
@@ -38,15 +53,13 @@ namespace XmlExample
 
         static Parser<T> Tag<T>(Parser<T> content)
         {
-            return from lt in Parse.Char('<').Token()
+            return from lt in Parse.Char('<')
                    from t in content
                    from gt in Parse.Char('>').Token()
                    select t;
         }
 
-        static readonly Parser<BeginTag> BeginTag= 
-            Tag(from id in Identifier
-                select new BeginTag { Name = id });
+        static readonly Parser<string> BeginTag = Tag(Identifier);
 
         static Parser<string> EndTag(string name)
         {
@@ -63,8 +76,8 @@ namespace XmlExample
         static readonly Parser<Node> FullNode =
             from tag in BeginTag
             from nodes in Parse.Ref(() => Item).Many()
-            from end in EndTag(tag.Name)
-            select new Node { Name = tag.Name, Children = nodes };
+            from end in EndTag(tag)
+            select new Node { Name = tag, Children = nodes };
 
         static readonly Parser<Node> ShortNode = Tag(from id in Identifier
                                                      from slash in Parse.Char('/')
@@ -72,10 +85,12 @@ namespace XmlExample
         
         static readonly Parser<Node> Node = ShortNode.Or(FullNode);
 
-        static readonly Parser<Item> Item = Node.Select(n => (Item)n).Or(Content.Select(c => (Item)c));
+        static readonly Parser<Item> Item = Node.Select(n => (Item)n).XOr(Content.Select(c => (Item)c));
 
         public static readonly Parser<Document> Document =
-            Node.Select(n => new Document { Root = n }).End();
+            from leading in Parse.WhiteSpace.Many()
+            from doc in Node.Select(n => new Document { Root = n }).End()
+            select doc;
     }
 
     class Program
@@ -83,7 +98,7 @@ namespace XmlExample
         static void Main(string[] args)
         {
             var doc = "<body><p>hello,<br/> <i>world!</i></p></body>";
-            var parsed = XmlParser.Document.TryParse(doc);
+            var parsed = XmlParser.Document.Parse(doc);
             Console.WriteLine(parsed);
             Console.ReadKey(true);
         }

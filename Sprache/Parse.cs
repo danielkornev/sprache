@@ -79,7 +79,7 @@ namespace Sprache
         public static readonly Parser<char> Numeric = Char(char.IsNumber, "numeric character");
 
         /// <summary>
-        /// TryParse a string of characters.
+        /// Parse a string of characters.
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
@@ -89,11 +89,12 @@ namespace Sprache
             return s
                 .Select(Char)
                 .Aggregate(Return(Enumerable.Empty<char>()),
-                    (a, p) => a.Concat(p.Once()));
+                    (a, p) => a.Concat(p.Once()))
+                .Named(s);
         }
         
         /// <summary>
-        /// TryParse first, and if successful, then parse second.
+        /// Parse first, and if successful, then parse second.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="U"></typeparam>
@@ -109,7 +110,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// TryParse a stream of elements.
+        /// Parse a stream of elements.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -135,12 +136,22 @@ namespace Sprache
                     r = parser(remainder);
                 }
 
-                var f = r as Failure<T>;
-                if (f != null && f.FailedInput != remainder)
-                    return f.ChangeType<IEnumerable<T>>();
-
                 return new Success<IEnumerable<T>>(result, remainder);
             };
+        }
+
+        /// <summary>
+        /// Parse a stream of elements. If any element is partially parsed
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parser"></param>
+        /// <returns></returns>
+        /// <remarks>Implemented imperatively to decrease stack usage.</remarks>
+        public static Parser<IEnumerable<T>> XMany<T>(this Parser<T> parser)
+        {
+            Enforce.ArgumentNotNull(parser, "parser");
+
+            return parser.Many().Then(m => parser.Once().XOr(Return(m)));
         }
 
         /// <summary>
@@ -192,38 +203,6 @@ namespace Sprache
         }
 
         /// <summary>
-        /// TryParse first, then second, returning only the result of second.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="U"></typeparam>
-        /// <param name="first"></param>
-        /// <param name="second"></param>
-        /// <returns></returns>
-        public static Parser<U> IgnoreThen<T, U>(this Parser<T> first, Parser<U> second)
-        {
-            Enforce.ArgumentNotNull(first, "first");
-            Enforce.ArgumentNotNull(second, "second");
-
-            return first.Then(ignored => second);
-        }
-
-        /// <summary>
-        /// TryParse first, then second, returning only the result of first.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="U"></typeparam>
-        /// <param name="first"></param>
-        /// <param name="second"></param>
-        /// <returns></returns>
-        public static Parser<T> ThenIgnore<T, U>(this Parser<T> first, Parser<U> second)
-        {
-            Enforce.ArgumentNotNull(first, "first");
-            Enforce.ArgumentNotNull(second, "second");
-
-            return first.Then(result => second.Select(ignored => result));
-        }
-
-        /// <summary>
         /// TryParse the token, embedded in any amount of whitespace characters.
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -233,7 +212,9 @@ namespace Sprache
         {
             Enforce.ArgumentNotNull(parser, "parser");
 
-            return WhiteSpace.Many().IgnoreThen(parser.ThenIgnore(WhiteSpace.Many()));
+            return from item in parser
+                   from ws in WhiteSpace.Many()
+                   select item;
         }
 
         /// <summary>
@@ -355,20 +336,7 @@ namespace Sprache
         }
 
         /// <summary>
-        /// If parser fails, treat this as a failure at the first input position.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="parser"></param>
-        /// <returns></returns>
-        public static Parser<T> Try<T>(this Parser<T> parser)
-        {
-            Enforce.ArgumentNotNull(parser, "parser");
-
-            return i => parser(i).IfFailure(f => new Failure<T>(i, () => f.Message, () => f.Expectations));
-        }
-
-        /// <summary>
-        /// TryParse a stream of elements containing only one item.
+        /// Parse a stream of elements containing only one item.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="parser"></param>
@@ -522,7 +490,7 @@ namespace Sprache
 
         public static readonly Parser<string> Decimal =
             from integral in Parse.Number
-            from fraction in Parse.Char('.').IgnoreThen(Number.Select(n => "." + n)).XOr(Return(""))
+            from fraction in Parse.Char('.').Then(point => Number.Select(n => "." + n)).XOr(Return(""))
             select integral + fraction;
 
     }

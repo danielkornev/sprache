@@ -105,7 +105,7 @@ namespace Sprache.Tests
         }
 
         [Test]
-        public void WhenFirstOptionFailsAndConsumesInput_SecondOptionNotTried()
+        public void WithXOr_WhenFirstOptionFailsAndConsumesInput_SecondOptionNotTried()
         {
             var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
             var second = Parse.Char('a').Once();
@@ -114,20 +114,11 @@ namespace Sprache.Tests
         }
 
         [Test]
-        public void WhenFirstOptionFailsAndConsumesInput_OrSecondOptionTried()
+        public void WithOr_WhenFirstOptionFailsAndConsumesInput_SecondOptionTried()
         {
             var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
             var second = Parse.Char('a').Once();
             var p = first.Or(second);
-            AssertParser.SucceedsWithAll(p, "a");
-        }
-
-        [Test]
-        public void WithTry_WhenFirstOptionFailsAndConsumesInput_SecondOptionTried()
-        {
-            var first = Parse.Char('a').Once().Concat(Parse.Char('b').Once());
-            var second = Parse.Char('a').Once();
-            var p = first.Try().XOr(second);
             AssertParser.SucceedsWithAll(p, "a");
         }
 
@@ -179,6 +170,30 @@ namespace Sprache.Tests
         public void DetectsMutualLeftRecursion()
         {
             Assert.Throws<ParseException>(() => ABSeq.End().TryParse("baba"));
+        }
+
+        [Test]
+        public void WithMany_WhenLastElementFails_FailureReportedAtLastElement()
+        {
+            var ab = from a in Parse.Char('a')
+                     from b in Parse.Char('b')
+                     select "ab";
+
+            var p = ab.Many().End();
+
+            AssertParser.FailsAt(p, "ababaf", 4);
+        }
+
+        [Test]
+        public void WithXMany_WhenLastElementFails_FailureReportedAtLastElement()
+        {
+            var ab = from a in Parse.Char('a')
+                     from b in Parse.Char('b')
+                     select "ab";
+
+            var p = ab.XMany().End();
+
+            AssertParser.FailsAt(p, "ababaf", 5);
         }
     }
 }
