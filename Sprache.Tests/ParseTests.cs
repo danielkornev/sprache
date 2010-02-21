@@ -195,5 +195,23 @@ namespace Sprache.Tests
 
             AssertParser.FailsAt(p, "ababaf", 5);
         }
+
+        [Test]
+        public void ExceptStopsConsumingInputWhenExclusionParsed()
+        {
+            var exceptAa = Parse.AnyChar.Except(Parse.String("aa")).Many().Text();
+            AssertParser.SucceedsWith(exceptAa, "abcaab", r => Assert.AreEqual("abc", r));
+        }
+
+        [Test]
+        public void UntilProceedsUntilTheStopConditionIsMetAndReturnsAllButEnd()
+        {
+            var untilAa = Parse.AnyChar.Until(Parse.String("aa")).Text();
+            var r = untilAa.TryParse("abcaab");
+            Assert.IsInstanceOf<Success<string>>(r);
+            var s = (Success<string>)r;
+            Assert.AreEqual("abc", s.Result);
+            Assert.AreEqual(5, s.Remainder.Position);
+        }
     }
 }

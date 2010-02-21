@@ -70,6 +70,7 @@ namespace Sprache
             return CharExcept(ch => c == ch, c.ToString());
         }
 
+        public static readonly Parser<char> AnyChar = Char(c => true, "any character");
         public static readonly Parser<char> WhiteSpace = Char(char.IsWhiteSpace, "whitespace");
         public static readonly Parser<char> Digit = Char(char.IsDigit, "digit");
         public static readonly Parser<char> Letter = Char(char.IsLetter, "letter");
@@ -386,6 +387,40 @@ namespace Sprache
         public static Parser<U> Return<T, U>(this Parser<T> parser, U value)
         {
             return parser.Select(t => value);
+        }
+
+        /// <summary>
+        /// Attempt parsing only if the <paramref name="except"/> parser fails.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="parser"></param>
+        /// <param name="except"></param>
+        /// <returns></returns>
+        public static Parser<T> Except<T, U>(this Parser<T> parser, Parser<U> except)
+        {
+            // Could be more like: except.Then(s => s.Fail("..")).XOr(parser)
+            return i =>
+                {
+                    var r = except(i);
+                    if (r is Success<U>)
+                        return new Failure<T>(i, () => "Excepted parser succeeded.", () => new[] { "other than the excepted input" });
+                    return parser(i);
+                };
+        }
+
+        /// <summary>
+        /// Parse a sequence of items until a terminator is reached.
+        /// Returns the sequence, discarding the terminator.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="parser"></param>
+        /// <param name="until"></param>
+        /// <returns></returns>
+        public static Parser<IEnumerable<T>> Until<T, U>(this Parser<T> parser, Parser<U> until)
+        {
+            return parser.Except(until).Many().Then(r => until.Return(r));
         }
 
         /// <summary>
