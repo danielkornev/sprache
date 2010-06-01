@@ -528,6 +528,5 @@ namespace Sprache
             from integral in Parse.Number
             from fraction in Parse.Char('.').Then(point => Number.Select(n => "." + n)).XOr(Return(""))
             select integral + fraction;
-
     }
 }
