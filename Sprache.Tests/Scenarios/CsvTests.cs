@@ -38,13 +38,13 @@ namespace Sprache.Tests.Scenarios
             Parse.String(Environment.NewLine).Text();
 
         static readonly Parser<string> RecordTerminator =
-            Parse.Return("").End().Or(
+            Parse.Return("").End().XOr(
             NewLine.End()).Or(
             NewLine);
 
         static readonly Parser<string> Cell =
-            QuotedCell.Or(
-            LiteralCellContent.Many().Text());
+            QuotedCell.XOr(
+            LiteralCellContent.XMany().Text());
 
         static readonly Parser<IEnumerable<string>> Record =
             from leading in Cell
@@ -53,7 +53,7 @@ namespace Sprache.Tests.Scenarios
             select Cons(leading, rest);
 
         static readonly Parser<IEnumerable<IEnumerable<string>>> Csv =
-            Record.Many().End();
+            Record.XMany().End();
 
         static IEnumerable<T> Cons<T>(T head, IEnumerable<T> rest)
         {
@@ -153,6 +153,14 @@ namespace Sprache.Tests.Scenarios
             var input = "a,b,\"c" + Environment.NewLine + "d\"";
             var r = Csv.Parse(input);
             Assert.AreEqual(1, r.Count());
+        }
+
+        [Test]
+        public void IgnoresEmbeddedQuotesWhenNotFirstCharacter()
+        {
+            var input = "a\"b";
+            var r = Csv.Parse(input);
+            Assert.AreEqual("a\"b", r.First().First());
         }
     }
 }

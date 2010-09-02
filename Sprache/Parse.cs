@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Sprache
 {
@@ -26,7 +25,7 @@ namespace Sprache
                 if (!i.AtEnd)
                 {
                     if (predicate(i.Current))
-                        return Result.Succeed(i.Current, i.Advance());
+                        return new Success<char>(i.Current, i.Advance());
 
                     return new Failure<char>(i,
                         () => string.Format("unexpected '{0}'", i.Current),
@@ -180,7 +179,7 @@ namespace Sprache
 
             return i => parser(i).IfSuccess(s =>
                 s.Remainder.AtEnd ?
-                    (Result<T>)s :
+                    (IResult<T>)s :
                     new Failure<T>(
                         s.Remainder,
                         () => string.Format("unexpected '{0}'", s.Remainder.Current),
@@ -373,7 +372,7 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Return<T>(T value)
         {
-            return i => Result.Succeed(value, i);
+            return i => new Success<T>(value, i);
         }
 
         /// <summary>
@@ -436,7 +435,7 @@ namespace Sprache
             Enforce.ArgumentNotNull(predicate, "predicate");
 
             return i => parser(i).IfSuccess(s =>
-                predicate(s.Result) ? (Result<T>)s : new Failure<T>(i,
+                predicate(s.Result) ? (IResult<T>)s : new Failure<T>(i,
                     () => string.Format("Unexpected {0}.", s.Result),
                     () => new string[0]));
         }

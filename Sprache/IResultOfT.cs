@@ -4,21 +4,30 @@ using System.Linq;
 
 namespace Sprache
 {
-    public abstract class Result<T>
+    public interface IResult<out T>
     {
-        public abstract Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next);
-        public abstract Result<T> IfFailure(Func<Failure<T>, Result<T>> next);
     }
 
-    public static class Result
+    interface IResultHelper<T>
     {
-        public static Success<T> Succeed<T>(T result, Input remainder)
+        IResult<U> IfSuccess<U>(Func<Success<T>, IResult<U>> next);
+        IResult<T> IfFailure(Func<Failure<T>, IResult<T>> next);
+    }
+
+    static class ResultHelper
+    {
+        public static IResult<U> IfSuccess<T, U>(this IResult<T> result, Func<Success<T>, IResult<U>> next)
         {
-            return new Success<T>(result, remainder);
+            return ((IResultHelper<T>) result).IfSuccess(next);
+        }
+
+        public static IResult<T> IfFailure<T>(this IResult<T> result, Func<Failure<T>, IResult<T>> next)
+        {
+            return ((IResultHelper<T>) result).IfFailure(next);
         }
     }
 
-    public sealed class Success<T> : Result<T>
+    public sealed class Success<T> : IResult<T>, IResultHelper<T>
     {
         readonly Input _remainder;
         readonly T _result;
@@ -33,12 +42,12 @@ namespace Sprache
 
         public Input Remainder { get { return _remainder; } }
 
-        public override Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next)
+        IResult<U> IResultHelper<T>.IfSuccess<U>(Func<Success<T>, IResult<U>> next)
         {
             return next(this);
         }
 
-        public override Result<T> IfFailure(Func<Failure<T>, Result<T>> next)
+        IResult<T> IResultHelper<T>.IfFailure(Func<Failure<T>, IResult<T>> next)
         {
             return this;
         }
@@ -49,7 +58,7 @@ namespace Sprache
         }
     }
 
-    public sealed class Failure<T> : Result<T>
+    public sealed class Failure<T> : IResult<T>, IResultHelper<T>
     {
         readonly Func<string> _message;
         readonly Func<IEnumerable<string>> _expectations;
@@ -68,24 +77,19 @@ namespace Sprache
 
         public Input FailedInput { get { return _input; } }
 
-        public override Result<U> IfSuccess<U>(Func<Success<T>, Result<U>> next)
+        IResult<U> IResultHelper<T>.IfSuccess<U>(Func<Success<T>, IResult<U>> next)
         {
             return new Failure<U>(FailedInput, _message, _expectations);
         }
 
-        public override Result<T> IfFailure(Func<Failure<T>, Result<T>> next)
+        IResult<T> IResultHelper<T>.IfFailure(Func<Failure<T>, IResult<T>> next)
         {
             return next(this);
         }
 
-        public Result<U> ChangeType<U>()
-        {
-            return new Failure<U>(_input, _message, _expectations);
-        }
-
         public override string ToString()
         {
-            string expMsg = "";
+            var expMsg = "";
             
             if (Expectations.Any())
                 expMsg = " expected " + Expectations.Aggregate((e1, e2) => e1 + " or " + e2);
