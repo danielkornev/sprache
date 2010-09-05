@@ -1,4 +1,5 @@
-﻿using Sprache;
+﻿using System.Linq;
+using Sprache;
 
 namespace TinyTemplates
 {
@@ -16,7 +17,9 @@ namespace TinyTemplates
             select first + rest;
 
         static readonly Parser<TemplateMemberAccessor> Member =
-            Identifier.Select(i => new TemplateMemberAccessor(i));
+            from first in Identifier.Once()
+            from subs in Parse.Char('.').Then(_ => Identifier).Many()
+            select new TemplateMemberAccessor(first.Concat(subs));
 
         static readonly Parser<TemplateNode> FreeSymbol =
             Member.Select(m => new MemberAccessTemplateNode(m));

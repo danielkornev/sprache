@@ -1,22 +1,30 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace TinyTemplates
 {
     class TemplateMemberAccessor
     {
-        readonly string _memberName;
+        readonly IEnumerable<string> _memberPath;
 
-        public TemplateMemberAccessor(string memberName)
+        public TemplateMemberAccessor(IEnumerable<string> memberPath)
         {
-            _memberName = memberName;
+            _memberPath = memberPath;
         }
 
         public object GetMember(Stack<object> model)
         {
-            var m = model.Peek();
-            var mi = m.GetType().GetProperty(_memberName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty);
-            return mi.GetValue(m, null);
+            var r = model.Peek();
+            foreach (var memberName in _memberPath)
+            {
+                var mi = r.GetType().GetProperty(memberName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty);
+                if (mi == null)
+                    throw new ArgumentException(string.Format("The property '{0}' does not exist.", memberName));
+                r = mi.GetValue(r, null);
+            }
+
+            return r;
         }
     }
 }
