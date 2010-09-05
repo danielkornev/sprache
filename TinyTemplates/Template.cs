@@ -16,6 +16,7 @@ namespace TinyTemplates
     ///                          property field into model wrt content
     /// #^field -> disambiguate when child and parent fields have same
     ///            name (use parent)
+    /// #$ -> the model itself
     /// </remarks>
     public class Template
     {

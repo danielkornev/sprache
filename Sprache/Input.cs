@@ -5,6 +5,7 @@ namespace Sprache
 {
     public class Input
     {
+        public string Source { get; set; }
         readonly string _source;
         readonly int _position;
 
@@ -17,7 +18,7 @@ namespace Sprache
 
         internal Input(string source, int position)
         {
-            Enforce.ArgumentNotNull(source, "source");
+            Source = source;
 
             _source = source;
             _position = position;

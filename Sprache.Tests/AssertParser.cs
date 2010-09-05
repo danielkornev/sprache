@@ -52,7 +52,7 @@ namespace Sprache.Tests
             FailsWith(parser, input, f => Assert.AreEqual(position, f.FailedInput.Position));
         }
 
-        public static void FailsWith<T>(Parser<T> parser, string input, Action<Failure<T>> resultAssertion)
+        public static void FailsWith<T>(Parser<T> parser, string input, Action<IFailure<T>> resultAssertion)
         {
             parser.TryParse(input)
                 .IfSuccess(s =>

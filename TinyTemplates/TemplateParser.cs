@@ -39,7 +39,9 @@ namespace TinyTemplates
 
         static readonly Parser<TemplateNode> Iteration =
             (from i in OptionallyDelimited(Parse.Char('|').Then(_ => Member))
+// ReSharper disable StaticFieldInitializersReferesToFieldBelow
              from content in Parse.Ref(() => Aggregate)
+// ReSharper restore StaticFieldInitializersReferesToFieldBelow
              from end in Parse.String("#.")
              select new IterationTemplateNode(i, content)).Named("iteration directive");
 

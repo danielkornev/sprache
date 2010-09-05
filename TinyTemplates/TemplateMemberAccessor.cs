@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
 
 namespace TinyTemplates
 {
@@ -14,7 +15,7 @@ namespace TinyTemplates
         public object GetMember(Stack<object> model)
         {
             var m = model.Peek();
-            var mi = m.GetType().GetProperty(_memberName);
+            var mi = m.GetType().GetProperty(_memberName, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.GetProperty);
             return mi.GetValue(m, null);
         }
     }

@@ -39,8 +39,7 @@ namespace XmlExample
                 return string.Format("<{0}>", Name) +
                     Children.Aggregate("", (s, c) => s + c) +
                     string.Format("</{0}>", Name);
-            else
-                return string.Format("<{0}/>", Name);
+            return string.Format("<{0}/>", Name);
         }
     }
 
@@ -85,7 +84,7 @@ namespace XmlExample
         
         static readonly Parser<Node> Node = ShortNode.Or(FullNode);
 
-        static readonly Parser<Item> Item = Node.Select(n => (Item)n).XOr(Content.Select(c => (Item)c));
+        static readonly Parser<Item> Item = Node.Select(n => (Item)n).XOr(Content);
 
         public static readonly Parser<Document> Document =
             from leading in Parse.WhiteSpace.Many()
@@ -95,9 +94,9 @@ namespace XmlExample
 
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            var doc = "<body><p>hello,<br/> <i>world!</i></p></body>";
+            const string doc = "<body><p>hello,<br/> <i>world!</i></p></body>";
             var parsed = XmlParser.Document.Parse(doc);
             Console.WriteLine(parsed);
             Console.ReadKey(true);

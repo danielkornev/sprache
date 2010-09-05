@@ -11,20 +11,20 @@ namespace Sprache
     {
         public static IResult<T> TryParse<T>(this Parser<T> parser, string input)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
-            Enforce.ArgumentNotNull(input, "input");
+            if (parser == null) throw new ArgumentNullException("parser");
+            if (input == null) throw new ArgumentNullException("input");
 
             return parser(new Input(input));
         }
 
         public static T Parse<T>(this Parser<T> parser, string input)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
-            Enforce.ArgumentNotNull(input, "input");
+            if (parser == null) throw new ArgumentNullException("parser");
+            if (input == null) throw new ArgumentNullException("input");
 
             var result = parser.TryParse(input);
             
-            var success = result as Success<T>;
+            var success = result as ISuccess<T>;
             if (success != null)
                 return success.Result;
 

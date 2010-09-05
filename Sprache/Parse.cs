@@ -17,8 +17,8 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<char> Char(Predicate<char> predicate, string description)
         {
-            Enforce.ArgumentNotNull(predicate, "predicate");
-            Enforce.ArgumentNotNull(description, "description");
+            if (predicate == null) throw new ArgumentNullException("predicate");
+            if (description == null) throw new ArgumentNullException("description");
 
             return i =>
             {
@@ -85,7 +85,8 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<IEnumerable<char>> String(string s)
         {
-            Enforce.ArgumentNotNull(s, "s");
+            if (s == null) throw new ArgumentNullException("s");
+
             return s
                 .Select(Char)
                 .Aggregate(Return(Enumerable.Empty<char>()),
@@ -103,8 +104,8 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<U> Then<T, U>(this Parser<T> first, Func<T, Parser<U>> second)
         {
-            Enforce.ArgumentNotNull(first, "first");
-            Enforce.ArgumentNotNull(second, "second");
+            if (first == null) throw new ArgumentNullException("first");
+            if (second == null) throw new ArgumentNullException("second");
 
             return i => first(i).IfSuccess(s => second(s.Result)(s.Remainder));
         }
@@ -118,16 +119,16 @@ namespace Sprache
         /// <remarks>Implemented imperatively to decrease stack usage.</remarks>
         public static Parser<IEnumerable<T>> Many<T>(this Parser<T> parser)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
+            if (parser == null) throw new ArgumentNullException("parser");
 
             return i =>
             {
                 var remainder = i;
                 var result = new List<T>();
                 var r = parser(i);
-                while (r is Success<T>)
+                while (r is ISuccess<T>)
                 {
-                    var s = r as Success<T>;
+                    var s = r as ISuccess<T>;
                     if (remainder == s.Remainder)
                         break;
 
@@ -149,7 +150,7 @@ namespace Sprache
         /// <remarks>Implemented imperatively to decrease stack usage.</remarks>
         public static Parser<IEnumerable<T>> XMany<T>(this Parser<T> parser)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
+            if (parser == null) throw new ArgumentNullException("parser");
 
             return parser.Many().Then(m => parser.Once().XOr(Return(m)));
         }
@@ -162,7 +163,7 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<IEnumerable<T>> AtLeastOnce<T>(this Parser<T> parser)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
+            if (parser == null) throw new ArgumentNullException("parser");
 
             return parser.Once().Then(t1 => parser.Many().Select(ts => t1.Concat(ts)));
         }
@@ -175,7 +176,7 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> End<T>(this Parser<T> parser)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
+            if (parser == null) throw new ArgumentNullException("parser");
 
             return i => parser(i).IfSuccess(s =>
                 s.Remainder.AtEnd ?
@@ -196,8 +197,8 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<U> Select<T, U>(this Parser<T> parser, Func<T, U> convert)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
-            Enforce.ArgumentNotNull(convert, "convert");
+            if (parser == null) throw new ArgumentNullException("parser");
+            if (convert == null) throw new ArgumentNullException("convert");
 
             return parser.Then(t => Return(convert(t)));
         }
@@ -210,7 +211,7 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Token<T>(this Parser<T> parser)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
+            if (parser == null) throw new ArgumentNullException("parser");
 
             return from leading in WhiteSpace.Many()
                    from item in parser
@@ -226,7 +227,7 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Ref<T>(Func<Parser<T>> reference)
         {
-            Enforce.ArgumentNotNull(reference, "reference");
+            if (reference == null) throw new ArgumentNullException("reference");
 
             Parser<T> p = null;
 
@@ -266,20 +267,20 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Or<T>(this Parser<T> first, Parser<T> second)
         {
-            Enforce.ArgumentNotNull(first, "first");
-            Enforce.ArgumentNotNull(second, "second");
+            if (first == null) throw new ArgumentNullException("first");
+            if (second == null) throw new ArgumentNullException("second");
 
             return i =>
             {
                 var fr = first(i);
-                var ff = fr as Failure<T>;
+                var ff = fr as IFailure<T>;
                 if (ff != null)
                     return second(i).IfFailure(sf => new Failure<T>(
                         ff.FailedInput,
                         () => ff.Message,
                         () => ff.Expectations.Union(sf.Expectations)));
 
-                var fs = (Success<T>)fr;
+                var fs = (ISuccess<T>)fr;
                 if (fs.Remainder == i)
                     return second(i).IfFailure(sf => fs);
 
@@ -296,6 +297,9 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Named<T>(this Parser<T> parser, string name)
         {
+            if (parser == null) throw new ArgumentNullException("parser");
+            if (name == null) throw new ArgumentNullException("name");
+
             return i => parser(i).IfFailure(f => f.FailedInput == i ?
                 new Failure<T>(f.FailedInput, () => f.Message, () => new[] { name }) :
                 f);
@@ -311,12 +315,12 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> XOr<T>(this Parser<T> first, Parser<T> second)
         {
-            Enforce.ArgumentNotNull(first, "first");
-            Enforce.ArgumentNotNull(second, "second");
+            if (first == null) throw new ArgumentNullException("first");
+            if (second == null) throw new ArgumentNullException("second");
 
             return i => {
                 var fr = first(i);
-                var ff = fr as Failure<T>;
+                var ff = fr as IFailure<T>;
                 if (ff != null)
                 {
                     if (ff.FailedInput != i)
@@ -328,7 +332,7 @@ namespace Sprache
                         () => ff.Expectations.Union(sf.Expectations)));
                 }
 
-                var fs = (Success<T>)fr;
+                var fs = (ISuccess<T>)fr;
                 if (fs.Remainder == i)
                     return second(i).IfFailure(sf => fs);
 
@@ -344,7 +348,7 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<IEnumerable<T>> Once<T>(this Parser<T> parser)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
+            if (parser == null) throw new ArgumentNullException("parser");
 
             return parser.Select(r => (IEnumerable<T>)new[] { r });
         }
@@ -358,8 +362,8 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<IEnumerable<T>> Concat<T>(this Parser<IEnumerable<T>> first, Parser<IEnumerable<T>> second)
         {
-            Enforce.ArgumentNotNull(first, "first");
-            Enforce.ArgumentNotNull(second, "second");
+            if (first == null) throw new ArgumentNullException("first");
+            if (second == null) throw new ArgumentNullException("second");
 
             return first.Then(f => second.Select(s => f.Concat(s)));
         }
@@ -385,6 +389,7 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<U> Return<T, U>(this Parser<T> parser, U value)
         {
+            if (parser == null) throw new ArgumentNullException("parser");
             return parser.Select(t => value);
         }
 
@@ -398,11 +403,14 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Except<T, U>(this Parser<T> parser, Parser<U> except)
         {
+            if (parser == null) throw new ArgumentNullException("parser");
+            if (except == null) throw new ArgumentNullException("except");
+
             // Could be more like: except.Then(s => s.Fail("..")).XOr(parser)
             return i =>
                 {
                     var r = except(i);
-                    if (r is Success<U>)
+                    if (r is ISuccess<U>)
                         return new Failure<T>(i, () => "Excepted parser succeeded.", () => new[] { "other than the excepted input" });
                     return parser(i);
                 };
@@ -431,8 +439,8 @@ namespace Sprache
         /// <returns></returns>
         public static Parser<T> Where<T>(this Parser<T> parser, Func<T, bool> predicate)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
-            Enforce.ArgumentNotNull(predicate, "predicate");
+            if (parser == null) throw new ArgumentNullException("parser");
+            if (predicate == null) throw new ArgumentNullException("predicate");
 
             return i => parser(i).IfSuccess(s =>
                 predicate(s.Result) ? (IResult<T>)s : new Failure<T>(i,
@@ -455,9 +463,9 @@ namespace Sprache
             Func<T, Parser<U>> selector,
             Func<T, U, V> projector)
         {
-            Enforce.ArgumentNotNull(parser, "parser");
-            Enforce.ArgumentNotNull(projector, "projector");
-            Enforce.ArgumentNotNull(selector, "selector");
+            if (parser == null) throw new ArgumentNullException("parser");
+            if (selector == null) throw new ArgumentNullException("selector");
+            if (projector == null) throw new ArgumentNullException("projector");
 
             return parser.Then(t => selector(t).Select(u => projector(t, u)));
         }
@@ -476,6 +484,9 @@ namespace Sprache
             Parser<T> operand,
             Func<TOp, T, T, T> apply)
         {
+            if (op == null) throw new ArgumentNullException("op");
+            if (operand == null) throw new ArgumentNullException("operand");
+            if (apply == null) throw new ArgumentNullException("apply");
             return operand.Then(first => ChainOperatorRest(first, op, operand, apply));
         }
 
@@ -485,6 +496,9 @@ namespace Sprache
             Parser<T> operand,
             Func<TOp, T, T, T> apply)
         {
+            if (op == null) throw new ArgumentNullException("op");
+            if (operand == null) throw new ArgumentNullException("operand");
+            if (apply == null) throw new ArgumentNullException("apply");
             return op.Then(opvalue =>
                     operand.Then(operandValue =>
                         ChainOperatorRest(apply(opvalue, firstOperand, operandValue), op, operand, apply)))
@@ -505,6 +519,9 @@ namespace Sprache
             Parser<T> operand,
             Func<TOp, T, T, T> apply)
         {
+            if (op == null) throw new ArgumentNullException("op");
+            if (operand == null) throw new ArgumentNullException("operand");
+            if (apply == null) throw new ArgumentNullException("apply");
             return operand.Then(first => ChainRightOperatorRest(first, op, operand, apply));
         }
 
@@ -514,6 +531,9 @@ namespace Sprache
             Parser<T> operand,
             Func<TOp, T, T, T> apply)
         {
+            if (op == null) throw new ArgumentNullException("op");
+            if (operand == null) throw new ArgumentNullException("operand");
+            if (apply == null) throw new ArgumentNullException("apply");
             return op.Then(opvalue =>
                     operand.Then(operandValue =>
                         ChainRightOperatorRest(operandValue, op, operand, apply)).Then(r =>
@@ -524,8 +544,8 @@ namespace Sprache
         public static readonly Parser<string> Number = Numeric.AtLeastOnce().Text();
 
         public static readonly Parser<string> Decimal =
-            from integral in Parse.Number
-            from fraction in Parse.Char('.').Then(point => Number.Select(n => "." + n)).XOr(Return(""))
+            from integral in Number
+            from fraction in Char('.').Then(point => Number.Select(n => "." + n)).XOr(Return(""))
             select integral + fraction;
     }
 }
