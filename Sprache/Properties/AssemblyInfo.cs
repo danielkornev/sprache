@@ -1,10 +1,9 @@
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Sprache Tiny C# Parser Combinators")]
 [assembly: AssemblyProduct("Sprache")]
 [assembly: AssemblyCopyright("Copyright © Nicholas Blumhardt 2010")]
-[assembly: AssemblyVersion("0.1.8.1")]
-[assembly: AssemblyFileVersion("0.1.8.1")]
+[assembly: AssemblyVersion("1.9.1.31")]
+[assembly: AssemblyFileVersion("1.9.1.31")]
 [assembly: InternalsVisibleTo("Sprache.Tests")]
