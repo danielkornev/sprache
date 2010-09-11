@@ -1,0 +1,5 @@
+glob:Sprache.suo
+relre:bin/
+relre:obj/
+relre:_ReSharper
+relre:\.user
