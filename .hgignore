@@ -3,3 +3,5 @@ relre:bin/
 relre:obj/
 relre:_ReSharper
 relre:\.user
+glob:*.vs10x
+glob:*.orig
