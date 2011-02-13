@@ -502,7 +502,7 @@ namespace Sprache
             return op.Then(opvalue =>
                     operand.Then(operandValue =>
                         ChainOperatorRest(apply(opvalue, firstOperand, operandValue), op, operand, apply)))
-                .XOr(Return(firstOperand));
+                .Or(Return(firstOperand));
         }
 
         /// <summary>
@@ -538,7 +538,7 @@ namespace Sprache
                     operand.Then(operandValue =>
                         ChainRightOperatorRest(operandValue, op, operand, apply)).Then(r =>
                             Return(apply(opvalue, lastOperand, r))))
-                .XOr(Return(lastOperand));
+                .Or(Return(lastOperand));
         }
 
         public static readonly Parser<string> Number = Numeric.AtLeastOnce().Text();
